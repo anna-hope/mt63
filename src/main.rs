@@ -1,42 +1,58 @@
 use std::env::args;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
+
+use fundsp::wave::Wave;
+
+#[cfg(feature = "analysis")]
+use mt63::analysis::{signal_calculations, Calculation};
+use mt63::Mode;
+
+#[cfg(feature = "analysis")]
+fn write_csv(calculations: Vec<Calculation>, path: &Path) -> anyhow::Result<()> {
+    let mut writer = csv::WriterBuilder::new()
+        .has_headers(false)
+        .from_path(path)?;
+
+    writer.write_record(&[
+        "sample_signal_power",
+        "sample_symbol_count",
+        "sample_sin",
+        "sample_cos",
+        "window_signal_power",
+        "window_sin",
+        "window_cos",
+        "window_atan",
+    ])?;
+    for calculation in calculations {
+        writer.serialize(calculation)?;
+    }
+    Ok(())
+}
 
 fn main() -> anyhow::Result<()> {
     let args = args().collect::<Vec<_>>();
-    let wav_path = args.get(1).expect("Need a path to a wave file");
-    let wav_path = wav_path.parse::<PathBuf>()?;
+    let wav_path = args
+        .get(1)
+        .expect("Need a path to a wave file")
+        .parse::<PathBuf>()?;
 
-    let (channel, sample_rate) = mt63::get_first_channel_from_wav(&wav_path)?;
-    let mut offset = 1_000_000;
+    let output_path = args
+        .get(2)
+        .expect("Need output CSV path")
+        .parse::<PathBuf>()?;
 
-    let num_samples = 44;
-    let generated_samples = mt63::generate_samples(2500.0, sample_rate, num_samples);
+    let wave = Wave::load(&wav_path)?;
 
-    for _ in 0..10 {
-        let samples = channel
-            .iter()
-            .skip(offset)
-            .take(num_samples)
-            .copied()
-            .collect::<Vec<_>>();
-        let (sin, cos) = samples
-            .iter()
-            .zip(generated_samples.iter())
-            .map(|(audio_sample, generated_sample)| {
-                let audio_sample = f64::from(*audio_sample);
-                (
-                    f64::from(audio_sample) * generated_sample.sin,
-                    f64::from(audio_sample) * generated_sample.cos,
-                )
-            })
-            .reduce(|(first_sin, second_sin), (first_cos, second_cos)| {
-                (first_sin + second_sin, first_cos + second_cos)
-            })
-            .expect("Got no samples");
-        let result = sin.powi(2) + cos.powi(2);
-        dbg!(result);
-        offset += samples.len();
+    let mode = Mode::TwoK;
+
+    let start = 1_000_000;
+
+    #[cfg(feature = "analysis")]
+    {
+        println!("Doing calculations (per sample and per window)...");
+        let calculations = signal_calculations(&wave, mode, start).expect("Got no calculations");
+        write_csv(calculations, &output_path)?;
     }
-    // dbg!(&sin_wave);
+
     Ok(())
 }
