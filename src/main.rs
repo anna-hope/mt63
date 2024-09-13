@@ -1,18 +1,18 @@
 use std::env::args;
 use std::path::PathBuf;
 
-use mt63::wav;
+use mt63::audio;
 
 fn main() -> anyhow::Result<()> {
     let args = args().collect::<Vec<_>>();
     let wav_path = args.get(1).expect("Need a path to a wave file");
     let wav_path = wav_path.parse::<PathBuf>()?;
 
-    let (channel, sample_rate) = wav::get_first_channel_from_wav(&wav_path)?;
+    let (channel, sample_rate) = audio::get_first_channel_from_wav(&wav_path)?;
     let mut offset = 1_000_000;
 
     let num_samples = 44;
-    let generated_samples = wav::generate_samples(2500.0, sample_rate, num_samples);
+    let generated_samples = audio::generate_samples(2500.0, sample_rate, num_samples);
 
     for _ in 0..10 {
         let samples = channel

@@ -1,2 +1,2 @@
+pub mod audio;
 pub mod encoding;
-pub mod wav;
