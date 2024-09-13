@@ -1,3 +1,5 @@
 /target
-/data
+/data/*
 /.idea
+
+!/data/generate-ak6ba.wav
