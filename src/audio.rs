@@ -14,9 +14,10 @@ pub struct Sample {
     pub cos: f64,
 }
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Default)]
 pub enum Mode {
     OneK,
+    #[default]
     TwoK,
 }
 
@@ -40,11 +41,15 @@ pub struct AudioWindow<'audio> {
 }
 
 impl<'audio> AudioWindow<'audio> {
-    fn from_audio(audio: &'audio Audio) -> Self {
+    fn new(data: &'audio [f32], sample_rate: f64) -> Self {
         Self {
-            data: Cow::from(&audio.data),
-            sample_rate: audio.sample_rate,
+            data: Cow::from(data),
+            sample_rate,
         }
+    }
+
+    pub fn len(&self) -> usize {
+        self.data.len()
     }
 }
 
@@ -60,19 +65,26 @@ impl<'audio> Sub<AudioWindow<'audio>> for AudioWindow<'audio> {
 pub struct Audio {
     pub data: Vec<f32>,
     pub sample_rate: f64,
+    mode: Mode,
 }
 
 impl Audio {
     fn new(data: Vec<f32>, sample_rate: f64) -> Self {
-        Self { data, sample_rate }
+        Self {
+            data,
+            sample_rate,
+            mode: Default::default(),
+        }
     }
 
     pub fn sin_cos_at_freq(&self, freq_hz: f64) -> Vec<Sample> {
         todo!()
     }
 
-    pub fn window_at(&self, sample_offset: usize) -> AudioWindow<'_> {
-        todo!()
+    pub fn window_at(&self, sample_offset: usize) -> Option<AudioWindow<'_>> {
+        let window_size = (self.sample_rate / self.mode.baud_rate()).floor() as usize;
+        let data_window = self.data.get(sample_offset..sample_offset + window_size)?;
+        Some(AudioWindow::new(data_window, self.sample_rate))
     }
 
     pub fn power_at(&self, freq_hz: f64, time_secs: f64) -> f64 {
@@ -121,9 +133,13 @@ mod tests {
     const TEST_AUDIO_PATH: &str = "data/generate-ak6ba.wav";
 
     #[test]
-    fn can_load_audio() -> anyhow::Result<()> {
+    fn window_at_offset() -> anyhow::Result<()> {
         let audio = get_audio(TEST_AUDIO_PATH)?;
-        assert!(audio.len() > 0);
+        let offset = 500;
+        let window = audio.window_at(offset).expect("Should get window");
+        // Sample rate = 8000, baud rate = 20, thus sample rate / baud rate
+        let expected_len = 400;
+        assert_eq!(window.data.len(), expected_len);
         Ok(())
     }
 }
