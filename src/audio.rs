@@ -62,6 +62,10 @@ impl Audio {
     pub fn shift(&self) -> Self {
         todo!()
     }
+
+    pub fn len(&self) -> usize {
+        self.data.len()
+    }
 }
 
 impl From<Wave> for Audio {
@@ -70,7 +74,7 @@ impl From<Wave> for Audio {
     }
 }
 
-pub fn get_audio(path: &Path) -> anyhow::Result<Audio> {
+pub fn get_audio(path: impl AsRef<Path>) -> anyhow::Result<Audio> {
     let wave = Wave::load(path)?;
     Ok(Audio::from(wave))
 }
@@ -88,4 +92,18 @@ pub fn generate_samples(frequency_hz: f64, sample_rate: f64, samples: usize) -> 
     }
 
     sin_wave
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    const TEST_AUDIO_PATH: &str = "data/generate-ak6ba.wav";
+
+    #[test]
+    fn can_load_audio() -> anyhow::Result<()> {
+        let audio = get_audio(TEST_AUDIO_PATH)?;
+        assert!(audio.len() > 0);
+        Ok(())
+    }
 }
