@@ -3,8 +3,8 @@ use std::ops::Sub;
 use std::path::Path;
 use std::time::Duration;
 
-use fundsp::math;
 use fundsp::wave::Wave;
+use fundsp::{math, Float};
 
 const WINDOW_SIZE_SECONDS: f64 = 0.032;
 
@@ -82,7 +82,17 @@ impl Audio {
     }
 
     pub fn sin_cos_at_freq(&self, freq_hz: f64) -> Vec<Sample> {
-        todo!()
+        self.data
+            .iter()
+            .enumerate()
+            .map(|(index, &sample)| {
+                let timestamp = (index as f64) / self.sample_rate;
+                let phase = timestamp * 2.0 * f64::PI * freq_hz;
+                let sin = phase.sin() * f64::from(sample);
+                let cos = phase.cos() * f64::from(sample);
+                Sample { sin, cos }
+            })
+            .collect::<Vec<_>>()
     }
 
     pub fn window_at(&self, sample_offset: usize) -> Option<AudioWindow<'_>> {
