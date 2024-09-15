@@ -157,4 +157,13 @@ mod tests {
         assert_eq!(window.data.len(), expected_len);
         Ok(())
     }
+
+    #[test]
+    fn sin_cos_at_freq() -> anyhow::Result<()> {
+        let audio = get_audio(TEST_AUDIO_PATH)?;
+        let sin_cos = audio.sin_cos_at_freq(781.25);
+        assert_eq!(sin_cos.len(), audio.len());
+        // TODO: Actually test the values
+        Ok(())
+    }
 }
