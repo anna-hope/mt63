@@ -95,19 +95,19 @@ impl Audio {
             .collect::<Vec<_>>()
     }
 
-    pub fn window_at(&self, sample_offset: usize) -> Option<AudioWindow<'_>> {
-        let data_window = self
-            .data
-            .get(sample_offset..sample_offset + self.window_size())?;
-        Some(AudioWindow::new(data_window, self.sample_rate))
-    }
-
     pub fn power_at(&self, freq_hz: f64, time_secs: f64) -> f64 {
         todo!()
     }
 
     pub fn shift(&self) -> Self {
         todo!()
+    }
+
+    pub fn window_at(&self, sample_offset: usize) -> Option<AudioWindow<'_>> {
+        let data_window = self
+            .data
+            .get(sample_offset..sample_offset + self.window_size())?;
+        Some(AudioWindow::new(data_window, self.sample_rate))
     }
 
     pub fn len(&self) -> usize {
