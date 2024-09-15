@@ -1,6 +1,7 @@
 use std::borrow::Cow;
 use std::ops::Sub;
 use std::path::Path;
+use std::time::Duration;
 
 use fundsp::math;
 use fundsp::wave::Wave;
@@ -11,6 +12,25 @@ const WINDOW_SIZE_SECONDS: f64 = 0.032;
 pub struct Sample {
     pub sin: f64,
     pub cos: f64,
+}
+
+#[derive(Debug, Copy, Clone)]
+pub enum Mode {
+    OneK,
+    TwoK,
+}
+
+impl Mode {
+    pub fn baud_rate(&self) -> f64 {
+        match self {
+            Self::OneK => 10.0,
+            Self::TwoK => 20.0,
+        }
+    }
+
+    pub fn symbol_interval(&self) -> Duration {
+        Duration::from_secs(1).div_f64(self.baud_rate())
+    }
 }
 
 #[derive(Debug)]
@@ -51,7 +71,7 @@ impl Audio {
         todo!()
     }
 
-    pub fn window_at(&self, sample_offset: usize) -> &AudioWindow {
+    pub fn window_at(&self, sample_offset: usize) -> AudioWindow<'_> {
         todo!()
     }
 
