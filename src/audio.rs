@@ -77,13 +77,18 @@ impl Audio {
         }
     }
 
+    fn window_size(&self) -> usize {
+        (self.sample_rate / self.mode.baud_rate()).floor() as usize
+    }
+
     pub fn sin_cos_at_freq(&self, freq_hz: f64) -> Vec<Sample> {
         todo!()
     }
 
     pub fn window_at(&self, sample_offset: usize) -> Option<AudioWindow<'_>> {
-        let window_size = (self.sample_rate / self.mode.baud_rate()).floor() as usize;
-        let data_window = self.data.get(sample_offset..sample_offset + window_size)?;
+        let data_window = self
+            .data
+            .get(sample_offset..sample_offset + self.window_size())?;
         Some(AudioWindow::new(data_window, self.sample_rate))
     }
 
