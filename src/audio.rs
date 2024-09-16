@@ -1,5 +1,5 @@
-use std::borrow::Cow;
-use std::ops::Sub;
+use std::borrow::{Borrow, Cow};
+use std::ops::{Deref, Sub};
 use std::path::Path;
 use std::time::Duration;
 
@@ -34,30 +34,57 @@ impl Mode {
     }
 }
 
-#[derive(Debug)]
+/// An `AudioWindow` does not own its data.
+#[derive(Debug, Copy, Clone)]
 pub struct AudioWindow<'audio> {
-    data: Cow<'audio, [f32]>,
+    data: &'audio [f32],
     sample_rate: f64,
 }
 
 impl<'audio> AudioWindow<'audio> {
     fn new(data: &'audio [f32], sample_rate: f64) -> Self {
-        Self {
-            data: Cow::from(data),
-            sample_rate,
-        }
+        Self { data, sample_rate }
     }
 
     pub fn len(&self) -> usize {
         self.data.len()
     }
+
+    pub fn to_owned(&self) -> OwnedAudioWindow {
+        OwnedAudioWindow {
+            data: self.data.to_vec(),
+            sample_rate: self.sample_rate,
+        }
+    }
 }
 
 impl<'audio> Sub<AudioWindow<'audio>> for AudioWindow<'audio> {
-    type Output = Self;
+    type Output = OwnedAudioWindow;
 
     fn sub(self, rhs: AudioWindow) -> Self::Output {
-        todo!()
+        let data = self
+            .data
+            .iter()
+            .zip(rhs.data.iter())
+            .map(|(this, &other)| this - other)
+            .collect::<Vec<_>>();
+        OwnedAudioWindow {
+            data,
+            sample_rate: self.sample_rate,
+        }
+    }
+}
+
+/// An OwnedAudioWindow owns its data.
+#[derive(Debug, Clone)]
+pub struct OwnedAudioWindow {
+    data: Vec<f32>,
+    sample_rate: f64,
+}
+
+impl OwnedAudioWindow {
+    pub fn as_audio_window(&self) -> AudioWindow<'_> {
+        AudioWindow::new(&self.data, self.sample_rate)
     }
 }
 
@@ -164,6 +191,16 @@ mod tests {
         let sin_cos = audio.sin_cos_at_freq(781.25);
         assert_eq!(sin_cos.len(), audio.len());
         // TODO: Actually test the values
+        Ok(())
+    }
+
+    #[test]
+    fn audio_window_sub() -> anyhow::Result<()> {
+        let audio = get_audio(TEST_AUDIO_PATH)?;
+        let offset = 500;
+        let window = audio.window_at(offset).expect("Should get window");
+        let new_window = window - window;
+        assert!(new_window.data.iter().all(|&x| x == 0.));
         Ok(())
     }
 }
