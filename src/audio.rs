@@ -1,5 +1,4 @@
-use std::borrow::{Borrow, Cow};
-use std::ops::{Deref, Sub};
+use std::ops::Sub;
 use std::path::Path;
 use std::time::Duration;
 
@@ -48,6 +47,10 @@ impl<'audio> AudioWindow<'audio> {
 
     pub fn len(&self) -> usize {
         self.data.len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.data.is_empty()
     }
 
     pub fn to_owned(&self) -> OwnedAudioWindow {
