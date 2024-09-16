@@ -2,6 +2,7 @@ use std::ops::Sub;
 use std::path::Path;
 use std::time::Duration;
 
+use fundsp::read::WaveError;
 use fundsp::wave::Wave;
 use fundsp::{math, Float};
 
@@ -151,9 +152,8 @@ impl From<Wave> for Audio {
     }
 }
 
-pub fn get_audio(path: impl AsRef<Path>) -> anyhow::Result<Audio> {
-    let wave = Wave::load(path)?;
-    Ok(Audio::from(wave))
+pub fn get_audio(path: impl AsRef<Path>) -> Result<Audio, WaveError> {
+    Wave::load(path).map(|w| w.into())
 }
 
 pub fn generate_samples(frequency_hz: f64, sample_rate: f64, samples: usize) -> Vec<Sample> {
