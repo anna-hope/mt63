@@ -1,6 +1,5 @@
 use std::env::args;
 use std::path::PathBuf;
-
 use mt63::audio;
 
 fn main() -> anyhow::Result<()> {
@@ -10,11 +9,11 @@ fn main() -> anyhow::Result<()> {
     match cmd_mode.as_str() {
         "print-rate" => {
             let mut args = args;
-            return print_rate(args.split_off(1));
+            return print_rate(args.split_off(1).as_slice());
         }
         "print-samples" => {
             let mut args = args;
-            return print_samples(args.split_off(1));
+            return print_samples(args.split_off(1).as_slice());
         }
         _ => {
             println!("unknown subcommand");
@@ -24,7 +23,7 @@ fn main() -> anyhow::Result<()> {
     Ok(())
 }
 
-fn print_rate(args: Vec<String>) -> anyhow::Result<()> {
+fn print_rate(args: &[String]) -> anyhow::Result<()> {
     let wav_path = args.get(1).expect("Need a path to a wave file");
     let wav_path = wav_path.parse::<PathBuf>()?;
 
@@ -35,7 +34,7 @@ fn print_rate(args: Vec<String>) -> anyhow::Result<()> {
     Ok(())
 }
 
-fn print_samples(args: Vec<String>) -> anyhow::Result<()> {
+fn print_samples(args: &[String]) -> anyhow::Result<()> {
     let wav_path = args.get(1).expect("Need a path to a wave file");
     let wav_path = wav_path.parse::<PathBuf>()?;
 
