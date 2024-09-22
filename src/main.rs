@@ -4,29 +4,32 @@ use mt63::audio;
 
 fn main() -> anyhow::Result<()> {
     let args = args().collect::<Vec<_>>();
-
-    let cmd_mode = args.get(1).expect("need a subcommand");
+    
+    let (program_name, args) = args.split_first().ok_or_else(|| anyhow::anyhow!("Need arguments"))?;
+    
+    if args.len() < 2 {
+        return Err(anyhow::anyhow!("Usage: {program_name} [subcommand] [wav_file]"));
+    }
+    
+    // Unwrap will always work here since we know args.len >= 2
+    let cmd_mode = args.first().unwrap();
+    let wav_path = args.get(1).unwrap();
+    
     match cmd_mode.as_str() {
         "print-rate" => {
-            let mut args = args;
-            return print_rate(args.split_off(1).as_slice());
+            print_rate(wav_path)
         }
         "print-samples" => {
-            let mut args = args;
-            return print_samples(args.split_off(1).as_slice());
+            print_samples(wav_path)
         }
         _ => {
-            println!("unknown subcommand");
+            Err(anyhow::anyhow!("unknown subcommand: {}", cmd_mode))
         }
     }
-
-    Ok(())
 }
 
-fn print_rate(args: &[String]) -> anyhow::Result<()> {
-    let wav_path = args.get(1).expect("Need a path to a wave file");
+fn print_rate(wav_path: &str) -> anyhow::Result<()> {
     let wav_path = wav_path.parse::<PathBuf>()?;
-
     let audio = audio::get_audio(&wav_path)?;
 
     println!("{}", audio.sample_rate);
@@ -34,10 +37,8 @@ fn print_rate(args: &[String]) -> anyhow::Result<()> {
     Ok(())
 }
 
-fn print_samples(args: &[String]) -> anyhow::Result<()> {
-    let wav_path = args.get(1).expect("Need a path to a wave file");
+fn print_samples(wav_path: &str) -> anyhow::Result<()> {
     let wav_path = wav_path.parse::<PathBuf>()?;
-
     let audio = audio::get_audio(&wav_path)?;
 
     for sample in audio.data {
